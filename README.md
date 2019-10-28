@@ -5,7 +5,7 @@
 此脚本目的用于为校园网内远程设备认证上网
 
 # V1.0
-重写[OYCN](https://github.com/OYCN)的认证脚本
+重写[oPluss](https://github.com/OYCN)的认证脚本
 
 # 支持功能
 
@@ -30,4 +30,4 @@ python3 main.py logout
 ```
 
 # 感谢
-[OYCN](https://github.com/OYCN)
+[oPluss](https://github.com/OYCN)
