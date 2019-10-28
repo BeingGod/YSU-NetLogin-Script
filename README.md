@@ -1,4 +1,4 @@
-# YSUnetLogin
+# YSU_netLogin
 燕山大学校园网认证脚本
 
 # 说明
