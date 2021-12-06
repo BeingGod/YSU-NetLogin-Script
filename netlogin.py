@@ -1,9 +1,37 @@
-import urllib
-import urllib.request
-import urllib.parse
+# coding:utf-8
 import re
 import json
-import req
+import sys
+
+
+VERSION  = 0 # Python版本
+
+
+# 封装post请求
+def post(url,headers={},data={}):
+    if VERSION == 3:
+        data = bytes(urllib.parse.urlencode(data),encoding='utf-8')
+        request = urllib.request.Request(url,headers=headers,data=data)
+        response = urllib.request.urlopen(request)
+    else:
+        data = bytes(urllib.urlencode(data))
+        request = urllib2.Request(url,headers=headers,data=data)
+        response = urllib2.urlopen(request)
+
+    return response
+
+
+# 封装get请求
+def get(url,headers={}):
+    if VERSION == 3:
+        request = urllib.request.Request(url,headers=headers)
+        response = urllib.request.urlopen(request)
+    else:
+        request = urllib2.Request(url,headers=headers)
+        response = urllib2.urlopen(request)
+
+    return response
+
 
 class Netlogin():
     def __init__(self):
@@ -28,17 +56,19 @@ class Netlogin():
         self.isLogined = None
         self.alldata = None
 
+
     def tst_net(self):
         '''
         测试网络是否认证
         :return: 是否已经认证
         '''
-        res = req.get('http://auth.ysu.edu.cn',headers = self.header)
+        res = get('http://auth.ysu.edu.cn',headers = self.header)
         if res.geturl().find('success.jsp')>0:
             self.isLogined = True
         else:
             self.isLogined = False
         return self.isLogined
+
 
     def isCode(self):
         '''
@@ -47,7 +77,9 @@ class Netlogin():
         :return:是否需要验证码
         '''
         pass
+
         return False
+
 
     def login(self,user,pwd,type,code=''):
         '''
@@ -72,11 +104,11 @@ class Netlogin():
                 'validcode': code,
                 'passwordEncrypt':'False'
             }
-            res = req.get('http://auth.ysu.edu.cn',headers = self.header)
+            res = get('http://auth.ysu.edu.cn',headers = self.header)
             queryString = re.findall(r"href='.*?\?(.*?)'", res.read().decode('utf-8'), re.S)
             self.data['queryString'] = queryString[0]
 	    
-            res = req.post(self.url+'login',headers = self.header,data = self.data)
+            res = post(self.url+'login',headers = self.header,data = self.data)
             login_json = json.loads(res.read().decode('utf-8'))
             self.userindex = login_json['userIndex']
             #self.info = login_json
@@ -85,20 +117,22 @@ class Netlogin():
                 return (True,'认证成功')
             else:
                 return (False,self.info)
-        return (True,'已经在线')
 
+        return (True,'已经在线')
     def get_alldata(self):
         '''
         获取当前认证账号全部信息
         #！！！注意！！！#此操作会获得账号alldata['userId']姓名alldata['userName']以及密码alldata['password']
         :return:全部数据的字典格式
         '''
-        res = req.get('http://auth.ysu.edu.cn/eportal/InterFace.do?method=getOnlineUserInfo',headers = self.header)
+        res = get('http://auth.ysu.edu.cn/eportal/InterFace.do?method=getOnlineUserInfo',headers = self.header)
         try:
             self.alldata = json.loads(res.read().decode('utf-8'))
         except json.decoder.JSONDecodeError as e:
             print('数据解析失败，请稍后重试。')
+
         return self.alldata
+
 
     def logout(self):
         '''
@@ -108,11 +142,55 @@ class Netlogin():
         if self.alldata==None:
             self.get_alldata()
 
-        res = req.get(self.url+'logout',headers = self.header)
+        res = get(self.url+'logout',headers = self.header)
         logout_json = json.loads(res.read().decode('utf-8'))
         #self.info = logout_json
         self.info = logout_json['message']
+
         if logout_json['result'] == 'success':
             return (True,'下线成功')
         else:
             return (False,self.info)
+
+if __name__ == '__main__':
+    # 判断Python版本
+    if sys.version_info < (3, 0):
+        VERSION = 2
+    else:
+        VERSION = 3
+
+    # 根据不同版本导入不同的urllib库
+    if VERSION == 3:
+        import urllib.request
+        import urllib.parse
+    else:
+        import urllib2
+        import urllib
+
+    loger = Netlogin()
+    l = len(sys.argv)
+    name = sys.argv[0]
+    if l==2 and sys.argv[1]=='logout':
+        state,info = loger.logout()
+        if state:
+            print(info)
+        else:
+            print('出现错误!')
+            print(info)
+        sys.exit(0)
+    elif l==3:
+        state, info = loger.login(user=sys.argv[1], pwd=sys.argv[2], type='0')
+    elif l==4:
+        state, info = loger.login(user=sys.argv[1], pwd=sys.argv[2], type=sys.argv[3])
+    else:
+        print('登陆服务： 0.校园网 1.中国移动 2.中国联通 3.中国电信')
+        print('格式：')
+        print('登入：%s userid password [service_type=校园网] ' % name)
+        print('注销：%s logout ' % name)
+        sys.exit(0)
+    if state:
+        print(info)
+    else:
+        print('出现错误!')
+        print(info)
+
