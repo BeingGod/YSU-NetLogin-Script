@@ -14,7 +14,7 @@
 2.中国联通 
 3.中国电信
 
-```python3/python2
+```python3
 python netlogin.py 学号 密码 服务提供商编号(默认0.校园网)
 ```
 
@@ -22,7 +22,7 @@ python netlogin.py 学号 密码 服务提供商编号(默认0.校园网)
 
 会自动获取目前已登录用户信息，将其下线
 
-```python3/python2
+```python3
 python main.py logout
 ```
 
